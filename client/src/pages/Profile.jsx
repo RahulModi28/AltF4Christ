@@ -69,7 +69,7 @@ export default function Profile() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 relative">
             {/* Background Accents */}
             <div className="absolute top-[20%] right-[10%] size-[400px] bg-electric-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
             <div className="absolute bottom-[20%] left-[10%] size-[400px] bg-neon-violet/5 rounded-full blur-[120px] pointer-events-none"></div>

@@ -179,7 +179,7 @@ export default function Upload({ isEditing = false }) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 relative">
+        <div className="max-w-4xl mx-auto px-4 pt-28 pb-8 relative">
             {/* Background Accents */}
             <div className="absolute top-[10%] left-[-10%] size-[500px] bg-electric-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
             <div className="absolute bottom-[10%] right-[-10%] size-[500px] bg-neon-violet/5 rounded-full blur-[120px] pointer-events-none"></div>
