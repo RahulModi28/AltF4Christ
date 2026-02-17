@@ -65,9 +65,8 @@ const Upload = () => {
                 tags: [] // TODO: Add tags input
             };
 
-            // Assuming backend is running on port 5000 localhost for now, need a config
-            // DO NOT use hardcoded localhost in real prod, but for hackathon it's ok.
-            await axios.post('http://localhost:5000/api/resources', resourceData, {
+            // Use relative path to leverage Vite proxy (port 5001)
+            await axios.post('/api/resources', resourceData, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }

@@ -21,6 +21,7 @@ const authenticateUser = (req, res, next) => {
         next();
     } catch (error) {
         console.error("Token verification failed:", error.message);
+        console.error("Used Secret:", secret.substring(0, 5) + "...");
         return res.status(403).json({ error: 'Invalid token' });
     }
 };

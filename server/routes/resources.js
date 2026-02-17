@@ -19,11 +19,22 @@ dotenv.config();
 // So we know who the user is from `req.user`.
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-// Better to use Service Role key for backend operations if we want to bypass RLS or Manage it manually.
-// But let's stick to standard postgres query via supabase-js or just use the client.
+// Initialize global client for public read operations (using Anon Key)
+const supabase = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY);
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Helper to get authenticated client for write operations
+const getAuthenticatedSupabase = (req) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return supabase; // Fallback to anon
+
+    return createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY, {
+        global: {
+            headers: {
+                Authorization: authHeader
+            }
+        }
+    });
+};
 
 // GET /api/resources
 router.get('/', async (req, res) => {
@@ -61,8 +72,10 @@ router.post('/', authenticateUser, async (req, res) => {
         const { title, description, file_url, file_type, subject, branch, semester, year, category, tags } = req.body;
         const userId = req.user.sub; // From JWT
 
-        // 1. Insert Resource
-        const { data, error } = await supabase
+        // 1. Insert Resource (Use authenticated client to pass RLS)
+        const supabaseClient = getAuthenticatedSupabase(req);
+
+        const { data, error } = await supabaseClient
             .from('resources')
             .insert([{
                 title,
@@ -81,22 +94,12 @@ router.post('/', authenticateUser, async (req, res) => {
 
         if (error) throw error;
 
-        // 2. Award Points (10 points)
-        // We can do this via trigger or backend call. Let's do backend call.
-        const { error: pointsError } = await supabase.rpc('increment_points', { user_id: userId, points_to_add: 10 });
-        // NOTE: We haven't created this RPC yet. Alternatively, update directly.
-        // Direct update:
-        const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('points')
-            .eq('id', userId)
-            .single();
+        // 2. Award Points (10 points) using RPC (Atomic)
+        const { error: pointsError } = await supabaseClient.rpc('increment_points', { user_id: userId, points_to_add: 10 });
 
-        if (!userError) {
-            await supabase
-                .from('users')
-                .update({ points: (userData.points || 0) + 10 })
-                .eq('id', userId);
+        if (pointsError) {
+            console.error("Error awarding points:", pointsError);
+            // We don't fail the request if points fail, but we log it.
         }
 
         res.status(201).json(data[0]);
@@ -155,7 +158,8 @@ router.post('/:id/rate', authenticateUser, async (req, res) => {
 
         // 1. Check if already rated
         // The unique constraint in DB handles this, but let's be nice
-        const { error: checkError } = await supabase
+        const supabaseClient = getAuthenticatedSupabase(req);
+        const { error: checkError } = await supabaseClient
             .from('ratings')
             .insert([{ resource_id: id, user_id: userId, value }])
             .single();
@@ -171,9 +175,10 @@ router.post('/:id/rate', authenticateUser, async (req, res) => {
         if (resource) {
             const uploaderId = resource.uploaded_by;
             // Don't award points if rating own resource? optional logic.
+            // Award 2 points to uploader
             if (uploaderId !== userId) {
-                const { data: userData } = await supabase.from('users').select('points').eq('id', uploaderId).single();
-                await supabase.from('users').update({ points: (userData?.points || 0) + 2 }).eq('id', uploaderId);
+                const { error: pointsError } = await supabaseClient.rpc('increment_points', { user_id: uploaderId, points_to_add: 2 });
+                if (pointsError) console.error("Error awarding rating points:", pointsError);
             }
         }
 
