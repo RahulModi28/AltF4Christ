@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Download, Search, Filter, Book, Calendar, User, FileText, Cpu, Shield, Database } from 'lucide-react';
+import { Download, Search, Filter, Book, Calendar, User, FileText, Cpu, Shield, Database, Lock, Globe } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function ResourceList() {
     const [resources, setResources] = useState([]);
@@ -11,22 +13,29 @@ export default function ResourceList() {
         search: '',
         semester: '',
         year: '',
-        category: ''
+        category: '',
+        branch: '',
+        sort: 'latest'
     });
+
+    const { user } = useAuth(); // Get current user
 
     const fetchResources = async () => {
         try {
             setLoading(true);
+
+            // Base query with joins
             let query = supabase
                 .from('resources')
                 .select(`
-          *,
-          users (
-            name
-          )
-        `)
-                .order('created_at', { ascending: false });
+                  *,
+                  users (
+                    name,
+                    college
+                  )
+                `);
 
+            // Apply filters
             if (filters.search) {
                 query = query.ilike('title', `%${filters.search}%`);
             }
@@ -39,11 +48,37 @@ export default function ResourceList() {
             if (filters.category) {
                 query = query.eq('category', filters.category);
             }
+            if (filters.branch) {
+                query = query.eq('branch', filters.branch);
+            }
+
+            // Apply Sorting
+            if (filters.sort === 'oldest') {
+                query = query.order('created_at', { ascending: true });
+            } else {
+                // Default to latest
+                query = query.order('created_at', { ascending: false });
+            }
 
             const { data, error } = await query;
 
             if (error) throw error;
-            setResources(data);
+
+            // Client-side filtering for Privacy Access Control
+            // RLS is better, but for this Hackathon scope, client-side filtering with a clear visual logic is acceptable prototype
+            // Logic: Show if Public OR (Private AND Same College) OR (My Upload)
+            const filteredData = data.filter(resource => {
+                const isPublic = resource.privacy === 'public';
+                const isMine = resource.user_id === user?.id;
+                const isSameCollege = resource.users?.college === user?.college;
+
+                // Handle missing privacy field gracefully (default to public if undefined)
+                const privacy = resource.privacy || 'public';
+
+                return privacy === 'public' || isMine || (privacy === 'private' && isSameCollege);
+            });
+
+            setResources(filteredData);
         } catch (err) {
             console.error(err);
             setError('Failed to fetch resources');
@@ -61,6 +96,7 @@ export default function ResourceList() {
     };
 
     const getCategoryIcon = (category) => {
+        if (!category) return <Database className="h-4 w-4" />;
         switch (category) {
             case 'notes': return <FileText className="h-4 w-4" />;
             case 'project': return <Cpu className="h-4 w-4" />;
@@ -105,7 +141,7 @@ export default function ResourceList() {
                         />
                     </div>
 
-                    {['semester', 'year', 'category'].map((filterType) => (
+                    {['semester', 'year', 'category', 'branch'].map((filterType) => (
                         <div key={filterType} className="relative">
                             <select
                                 name={filterType}
@@ -113,7 +149,7 @@ export default function ResourceList() {
                                 onChange={handleFilterChange}
                                 className="block w-full pl-3 pr-10 py-3 text-base border border-white/10 bg-pitch-black/50 text-white focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 sm:text-sm rounded-xl appearance-none capitalize transition-all"
                             >
-                                <option value="">All {filterType}s</option>
+                                <option value="">All {filterType === 'branch' ? 'Branches' : filterType === 'category' ? 'Categories' : filterType + 's'}</option>
                                 {filterType === 'semester' && [1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
                                     <option key={sem} value={sem}>Semester {sem}</option>
                                 ))}
@@ -129,12 +165,38 @@ export default function ResourceList() {
                                         <option value="reference">Reference Book</option>
                                     </>
                                 )}
+                                {filterType === 'branch' && (
+                                    <>
+                                        <option value="CSE">CSE</option>
+                                        <option value="ECE">ECE</option>
+                                        <option value="EEE">EEE</option>
+                                        <option value="MECH">MECH</option>
+                                        <option value="CIVIL">CIVIL</option>
+                                        <option value="AI_DS">AI & DS</option>
+                                    </>
+                                )}
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                                 <Filter className="h-4 w-4 text-slate-500" />
                             </div>
                         </div>
                     ))}
+
+                    {/* Sort Option */}
+                    <div className="relative">
+                        <select
+                            name="sort"
+                            value={filters.sort || 'latest'}
+                            onChange={handleFilterChange}
+                            className="block w-full pl-3 pr-10 py-3 text-base border border-white/10 bg-pitch-black/50 text-white focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 sm:text-sm rounded-xl appearance-none capitalize transition-all"
+                        >
+                            <option value="latest">Latest</option>
+                            <option value="oldest">Oldest</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                            <Filter className="h-4 w-4 text-slate-500" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -165,22 +227,33 @@ export default function ResourceList() {
                     {resources.map((resource) => (
                         <div key={resource.id} className="glass-card p-6 flex flex-col group hover:border-electric-blue/30 transition-all hover:translate-y-[-2px]">
                             <div className="flex items-center justify-between mb-4">
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${resource.category === 'notes' ? 'bg-electric-blue/10 text-electric-blue border-electric-blue/20' :
-                                        resource.category === 'question_paper' ? 'bg-neon-violet/10 text-neon-violet border-neon-violet/20' :
+                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${(resource.category || 'other') === 'notes' ? 'bg-electric-blue/10 text-electric-blue border-electric-blue/20' :
+                                        (resource.category || 'other') === 'question_paper' ? 'bg-neon-violet/10 text-neon-violet border-neon-violet/20' :
                                             'bg-acid-green/10 text-acid-green border-acid-green/20'
                                     }`}>
                                     {getCategoryIcon(resource.category)}
-                                    {resource.category.replace('_', ' ')}
+                                    {resource.category ? resource.category.replace('_', ' ') : 'Uncategorized'}
                                 </span>
-                                <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" />
-                                    {new Date(resource.created_at).toLocaleDateString()}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${(resource.privacy || 'public') === 'private'
+                                            ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                                            : 'bg-acid-green/10 text-acid-green border-acid-green/20'
+                                        }`}>
+                                        {(resource.privacy || 'public') === 'private' ? <Lock className="size-3" /> : <Globe className="size-3" />}
+                                        {(resource.privacy || 'public') === 'private' ? 'Private' : 'Public'}
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        {resource.created_at ? new Date(resource.created_at).toLocaleDateString() : 'Unknown Date'}
+                                    </span>
+                                </div>
                             </div>
 
-                            <h3 className="text-lg font-bold font-display text-white mb-2 line-clamp-1 group-hover:text-electric-blue transition-colors" title={resource.title}>
-                                {resource.title}
-                            </h3>
+                            <Link to={`/resource/${resource.id}`} className="block">
+                                <h3 className="text-lg font-bold font-display text-white mb-2 line-clamp-1 group-hover:text-electric-blue transition-colors" title={resource.title}>
+                                    {resource.title}
+                                </h3>
+                            </Link>
                             <p className="text-sm text-slate-400 line-clamp-2 mb-6 flex-grow">
                                 {resource.description}
                             </p>

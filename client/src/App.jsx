@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Upload from './pages/Upload';
 import ResourceList from './pages/ResourceList';
 import Profile from './pages/Profile';
+import ResourceDetail from './pages/ResourceDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
@@ -41,6 +42,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Upload isEditing={true} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resource/:id"
+              element={
+                <ProtectedRoute>
+                  <ResourceDetail />
                 </ProtectedRoute>
               }
             />
