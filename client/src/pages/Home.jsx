@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { BookOpen, Shield, Cpu, Activity, Zap, FileText, Database, ChevronRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import LiquidEther from '../components/LiquidEther';
 
 export default function Home() {
     const { user } = useAuth();
@@ -39,30 +40,23 @@ export default function Home() {
     }
 
     return (
-        <div className="min-h-screen pt-28 pb-12">
+        <div className="min-h-screen pt-28 pb-12 relative overflow-hidden">
+            {/* Liquid Ether Background */}
+            <div className="absolute inset-0 z-0">
+                <LiquidEther
+                    colors={['#5227FF', '#FF9FFC', '#B19EEF']}
+                    mouseForce={30}
+                    cursorSize={150}
+                    isViscous={true}
+                    viscous={25}
+                    dt={0.02}
+                />
+                {/* Overlay to ensure text readability */}
+                <div className="absolute inset-0 bg-pitch-black/20 pointer-events-none"></div>
+            </div>
+
             {/* Hero Section */}
-            <div className="relative overflow-hidden">
-                {/* Vibrant Animated Background */}
-                <div className="absolute inset-0 bg-grid opacity-30"></div>
-
-                {/* Large gradient orbs */}
-                <div className="absolute top-[-30%] right-[-15%] size-[700px] bg-electric-blue/20 rounded-full blur-[180px] animate-float"></div>
-                <div className="absolute bottom-[-30%] left-[-15%] size-[700px] bg-neon-violet/20 rounded-full blur-[180px] animate-float-delayed"></div>
-
-                {/* Medium accent orbs */}
-                <div className="absolute top-[10%] left-[20%] size-[400px] bg-electric-blue/10 rounded-full blur-[120px] animate-float-delayed"></div>
-                <div className="absolute bottom-[20%] right-[15%] size-[350px] bg-neon-violet/10 rounded-full blur-[120px] animate-float"></div>
-                <div className="absolute top-[40%] left-[50%] size-[300px] bg-acid-green/8 rounded-full blur-[100px] animate-float"></div>
-
-                {/* Small floating particles */}
-                <div className="absolute top-[15%] right-[30%] size-2 bg-electric-blue/40 rounded-full animate-float"></div>
-                <div className="absolute top-[25%] left-[15%] size-1.5 bg-neon-violet/50 rounded-full animate-float-delayed"></div>
-                <div className="absolute bottom-[35%] right-[20%] size-2 bg-acid-green/40 rounded-full animate-float"></div>
-                <div className="absolute top-[60%] left-[35%] size-1 bg-electric-blue/30 rounded-full animate-float-delayed"></div>
-
-                {/* Gradient line accents */}
-                <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-electric-blue/10 to-transparent"></div>
-                <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-neon-violet/10 to-transparent"></div>
+            <div className="relative z-10">
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center py-20 lg:py-32">
@@ -111,7 +105,7 @@ export default function Home() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Stat Card 1 - Notes */}
-                    <Link to="/resources?category=notes" className="glass-card-interactive p-6 group animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
+                    <div className="glass-card-interactive p-6 group animate-fade-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-3 rounded-xl bg-electric-blue/10 text-electric-blue group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <FileText className="h-8 w-8" />
@@ -125,10 +119,10 @@ export default function Home() {
                         <div className="mt-4 h-0.5 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-gradient-to-r from-electric-blue to-electric-blue/50 rounded-full transition-all group-hover:w-full w-2/3"></div>
                         </div>
-                    </Link>
+                    </div>
 
                     {/* Stat Card 2 - Papers */}
-                    <Link to="/resources?category=question_paper" className="glass-card-interactive p-6 group animate-fade-in-up" style={{ animationDelay: '0.5s', animationFillMode: 'both' }}>
+                    <div className="glass-card-interactive p-6 group animate-fade-in-up" style={{ animationDelay: '0.5s', animationFillMode: 'both' }}>
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-3 rounded-xl bg-neon-violet/10 text-neon-violet group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <Shield className="h-8 w-8" />
@@ -142,10 +136,10 @@ export default function Home() {
                         <div className="mt-4 h-0.5 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-gradient-to-r from-neon-violet to-neon-violet/50 rounded-full transition-all group-hover:w-full w-1/2"></div>
                         </div>
-                    </Link>
+                    </div>
 
                     {/* Stat Card 3 - Projects */}
-                    <Link to="/resources?category=project" className="glass-card-interactive p-6 group animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
+                    <div className="glass-card-interactive p-6 group animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
                         <div className="flex justify-between items-start mb-4">
                             <div className="p-3 rounded-xl bg-acid-green/10 text-acid-green group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                                 <Cpu className="h-8 w-8" />
@@ -159,7 +153,7 @@ export default function Home() {
                         <div className="mt-4 h-0.5 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-gradient-to-r from-acid-green to-acid-green/50 rounded-full transition-all group-hover:w-full w-1/3"></div>
                         </div>
-                    </Link>
+                    </div>
                 </div>
 
                 {/* Recent Uploads Section */}
