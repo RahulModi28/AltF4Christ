@@ -1,108 +1,217 @@
 import { useState } from 'react';
-import { supabase } from '../api/supabase';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { AlertCircle, User, Award, BookOpen, Calendar, Zap, Lock } from 'lucide-react';
 
-const Register = () => {
+export default function Register() {
+    const { signUp } = useAuth();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
     const [formData, setFormData] = useState({
-        name: '',
         email: '',
         password: '',
+        name: '',
         branch: '',
         semester: '',
-        year: ''
+        year: '',
+        college: ''
     });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleRegister = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
-
-        const { error } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-                data: {
-                    name: formData.name,
-                    branch: formData.branch,
-                    semester: formData.semester,
-                    year: formData.year
-                }
-            }
-        });
-
-        if (error) {
-            setError(error.message);
+        try {
+            setError('');
+            setLoading(true);
+            const { error } = await signUp(formData.email, formData.password, {
+                name: formData.name,
+                branch: formData.branch,
+                semester: formData.semester,
+                year: formData.year,
+                college: formData.college
+            });
+            if (error) throw error;
+            navigate('/');
+        } catch (err) {
+            setError(err.message);
+        } finally {
             setLoading(false);
-        } else {
-            // User created, trigger will handle profile creation
-            alert('Registration successful! Please login.');
-            navigate('/login');
         }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-100">
-            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
-                <h2 className="text-2xl font-bold text-center text-slate-800">Register</h2>
-                {error && <div className="p-3 text-red-500 bg-red-100 rounded">{error}</div>}
-                <form onSubmit={handleRegister} className="space-y-4">
-                    <div>
-                        <label className="block mb-1 font-medium text-slate-600">Full Name</label>
-                        <input type="text" name="name" required onChange={handleChange} className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block mb-1 font-medium text-slate-600">Email</label>
-                        <input type="email" name="email" required onChange={handleChange} className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div>
-                        <label className="block mb-1 font-medium text-slate-600">Password</label>
-                        <input type="password" name="password" required onChange={handleChange} className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block mb-1 font-medium text-slate-600">Branch</label>
-                            <input type="text" name="branch" required onChange={handleChange} placeholder="e.g. CSE" className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500" />
-                        </div>
-                        <div>
-                            <label className="block mb-1 font-medium text-slate-600">Year</label>
-                            <select name="year" required onChange={handleChange} className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select</option>
-                                <option value="1">1st</option>
-                                <option value="2">2nd</option>
-                                <option value="3">3rd</option>
-                                <option value="4">4th</option>
-                            </select>
+        <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Background Accents */}
+            <div className="absolute top-[20%] right-[10%] size-[400px] bg-electric-blue/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="absolute bottom-[20%] left-[10%] size-[400px] bg-acid-green/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+            <div className="max-w-md w-full space-y-8 relative z-10 p-8 glass-card">
+                <div className="text-center">
+                    <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-tr from-acid-green to-electric-blue p-[2px] mb-4">
+                        <div className="h-full w-full rounded-full bg-pitch-black flex items-center justify-center">
+                            <Zap className="h-8 w-8 text-acid-green" />
                         </div>
                     </div>
-                    <div>
-                        <label className="block mb-1 font-medium text-slate-600">Semester</label>
-                        <select name="semester" required onChange={handleChange} className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select</option>
-                            {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                    <h2 className="mt-2 text-3xl font-bold font-display text-white">
+                        Initialize Identity
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-400">
+                        Create a secure node profile
+                    </p>
+                </div>
+
+                <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3">
+                            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                            <p className="text-sm text-red-400 font-medium">{error}</p>
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div className="group">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Full Designation (Name)</label>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                                    <User className="h-5 w-5" />
+                                </span>
+                                <input
+                                    name="name"
+                                    type="text"
+                                    required
+                                    className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                    placeholder="John Doe"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="group">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Branch</label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                                        <Award className="h-5 w-5" />
+                                    </span>
+                                    <input
+                                        name="branch"
+                                        type="text"
+                                        required
+                                        className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                        placeholder="CSE"
+                                        value={formData.branch}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+                            <div className="group">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Semester</label>
+                                <div className="relative">
+                                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                                        <BookOpen className="h-5 w-5" />
+                                    </span>
+                                    <input
+                                        name="semester"
+                                        type="text"
+                                        required
+                                        className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                        placeholder="4"
+                                        value={formData.semester}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="group">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">College / Institution</label>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                                    <BookOpen className="h-5 w-5" />
+                                </span>
+                                <input
+                                    name="college"
+                                    type="text"
+                                    required
+                                    className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                    placeholder="Christ University"
+                                    value={formData.college}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="group">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Academic Year</label>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                                    <Calendar className="h-5 w-5" />
+                                </span>
+                                <input
+                                    name="year"
+                                    type="text"
+                                    required
+                                    className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                    placeholder="2"
+                                    value={formData.year}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="group">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
+                            <input
+                                name="email"
+                                type="email"
+                                required
+                                className="appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                placeholder="student@university.edu"
+                                value={formData.email}
+                                onChange={handleChange}
+                            />
+                        </div>
+
+                        <div className="group">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Passkey</label>
+                            <input
+                                name="password"
+                                type="password"
+                                required
+                                className="appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                        </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50"
-                    >
-                        {loading ? 'Registering...' : 'Register'}
-                    </button>
+                    <div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold uppercase tracking-wider rounded-xl text-white bg-acid-green hover:bg-acid-green/90 text-pitch-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-acid-green disabled:opacity-50 transition-all active:scale-[0.98]"
+                        >
+                            <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <Lock className="h-5 w-5 text-pitch-black/50 group-hover:text-pitch-black transition-colors" />
+                            </span>
+                            {loading ? 'Registering...' : 'Complete Registration'}
+                        </button>
+                    </div>
+
+                    <div className="text-center">
+                        <Link to="/login" className="font-medium text-electric-blue hover:text-neon-violet transition-colors text-sm">
+                            Already have branding? Sign in
+                        </Link>
+                    </div>
                 </form>
-                <p className="text-center text-slate-600">
-                    Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
-                </p>
             </div>
         </div>
     );
-};
-
-export default Register;
+}
