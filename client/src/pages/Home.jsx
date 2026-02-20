@@ -13,7 +13,7 @@ export default function Home() {
     useEffect(() => {
         fetchRecentResources();
         fetchStats();
-    }, []);
+    }, [user?.department]);
 
     const fetchRecentResources = async () => {
         if (!user?.department) return; // Wait for user context

@@ -91,7 +91,7 @@ export default function ResourceList() {
 
     useEffect(() => {
         fetchResources();
-    }, [filters]);
+    }, [filters, user?.department]);
 
     const handleFilterChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
