@@ -25,6 +25,7 @@ export default function ResourceList() {
             setLoading(true);
 
             // Base query with joins
+            if (!user?.department) return; // Wait for context
             let query = supabase
                 .from('resources')
                 .select(`
@@ -33,7 +34,8 @@ export default function ResourceList() {
                     name,
                     college
                   )
-                `);
+                `)
+                .eq('department', user.department);
 
             // Apply filters
             if (filters.search) {
@@ -129,9 +131,13 @@ export default function ResourceList() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 min-h-screen relative">
-            {/* Background Effects */}
-            <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 min-h-screen relative text-slate-300">
+            {/* Engaging Dynamic Background */}
+            <div className="fixed inset-0 bg-pitch-black z-[-3]"></div>
+            <div className="fixed inset-0 bg-grid opacity-[0.15] z-[-2] pointer-events-none"></div>
+            <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-electric-blue/20 rounded-full blur-[120px] pointer-events-none animate-float z-[-1]"></div>
+            <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-neon-violet/20 rounded-full blur-[120px] pointer-events-none animate-float-delayed z-[-1]"></div>
+            <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-transparent via-pitch-black/50 to-pitch-black z-[-1] pointer-events-none"></div>
             <div className="mb-12">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-glass-white border border-glass-border mb-4">
                     <span className="size-2 rounded-full bg-electric-blue animate-pulse"></span>
@@ -166,7 +172,7 @@ export default function ResourceList() {
                         />
                     </div>
 
-                    {['semester', 'year', 'category', 'branch'].map((filterType) => (
+                    {['semester', 'year', 'category'].map((filterType) => (
                         <div key={filterType} className="relative">
                             <select
                                 name={filterType}
@@ -174,7 +180,7 @@ export default function ResourceList() {
                                 onChange={handleFilterChange}
                                 className="block w-full pl-3 pr-10 py-3 text-base border border-white/10 bg-pitch-black/50 text-white focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 sm:text-sm rounded-xl appearance-none capitalize transition-all"
                             >
-                                <option value="">All {filterType === 'branch' ? 'Branches' : filterType === 'category' ? 'Categories' : filterType + 's'}</option>
+                                <option value="">All {filterType === 'category' ? 'Categories' : filterType + 's'}</option>
                                 {filterType === 'semester' && [1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
                                     <option key={sem} value={sem}>Semester {sem}</option>
                                 ))}
@@ -188,16 +194,7 @@ export default function ResourceList() {
                                         <option value="assignment">Assignment</option>
                                         <option value="project">Project</option>
                                         <option value="reference">Reference Book</option>
-                                    </>
-                                )}
-                                {filterType === 'branch' && (
-                                    <>
-                                        <option value="CSE">CSE</option>
-                                        <option value="ECE">ECE</option>
-                                        <option value="EEE">EEE</option>
-                                        <option value="MECH">MECH</option>
-                                        <option value="CIVIL">CIVIL</option>
-                                        <option value="AI_DS">AI & DS</option>
+                                        <option value="prompt">Prompt</option>
                                     </>
                                 )}
                             </select>
@@ -299,7 +296,7 @@ export default function ResourceList() {
                                     {resource.title}
                                 </h3>
                             </Link>
-                            <p className="text-sm text-slate-400 line-clamp-2 mb-6 flex-grow">
+                            <p className="text-sm text-slate-400 line-clamp-2 mb-6 flex-grow whitespace-pre-wrap">
                                 {resource.description}
                             </p>
 

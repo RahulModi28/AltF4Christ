@@ -124,7 +124,7 @@ export default function ResourceDetail() {
                                 </div>
                             </div>
 
-                            <p className="text-slate-300 text-lg leading-relaxed mb-8">
+                            <p className="text-slate-300 text-lg leading-relaxed mb-8 whitespace-pre-wrap">
                                 {resource.description || "No description provided for this resource node."}
                             </p>
 

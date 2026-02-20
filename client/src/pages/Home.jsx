@@ -16,18 +16,21 @@ export default function Home() {
     }, []);
 
     const fetchRecentResources = async () => {
+        if (!user?.department) return; // Wait for user context
         const { data } = await supabase
             .from('resources')
             .select('*, users(name)')
+            .eq('department', user.department)
             .order('created_at', { ascending: false })
             .limit(4);
         if (data) setRecentResources(data);
     };
 
     const fetchStats = async () => {
-        const { count: notesCount } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', 'notes');
-        const { count: papersCount } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', 'question_paper');
-        const { count: projectsCount } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('category', 'project');
+        if (!user?.department) return; // Wait for user context
+        const { count: notesCount } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('department', user.department).eq('category', 'notes');
+        const { count: papersCount } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('department', user.department).eq('category', 'question_paper');
+        const { count: projectsCount } = await supabase.from('resources').select('*', { count: 'exact', head: true }).eq('department', user.department).eq('category', 'project');
         setStats({
             notes: notesCount || 0,
             papers: papersCount || 0,

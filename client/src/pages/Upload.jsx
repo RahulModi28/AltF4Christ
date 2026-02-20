@@ -132,20 +132,24 @@ export default function Upload({ isEditing = false }) {
                 'qp': 'question_paper',
                 'solution': 'assignment',
                 'report': 'project',
-                'material': 'reference'
+                'material': 'reference',
+                'prompt': 'prompt'
             };
 
             const payload = {
                 title: formData.title,
                 description: formData.description,
                 subject: formData.subject,
-                branch: formData.branch,
                 semester: parseInt(formData.semester),
                 year: parseInt(formData.year),
                 resource_type: formData.resource_type,
                 category: categoryMap[formData.resource_type] || 'notes',
                 privacy: formData.privacy,
                 tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                // Auto-tag with user's academic details
+                branch: user.branch,
+                department: user.department,
+                college: user.college || 'Christ University',
                 // Only update file info if a new file was uploaded
                 ...(file && { file_url: publicUrl, file_type: fileExt })
             };
@@ -163,7 +167,6 @@ export default function Upload({ isEditing = false }) {
             } else {
                 // Insert new
                 payload.uploaded_by = user.id;
-                payload.college = user.college || 'Christ University';
 
                 const { error: dbError } = await supabase
                     .from('resources')
@@ -190,141 +193,114 @@ export default function Upload({ isEditing = false }) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 pt-28 pb-8 relative">
-            {/* Background Effects */}
-            <div className="fixed inset-0 bg-grid opacity-20 pointer-events-none"></div>
-            <div className="absolute top-[10%] left-[-10%] size-[500px] bg-electric-blue/10 rounded-full blur-[150px] pointer-events-none animate-float"></div>
-            <div className="absolute bottom-[10%] right-[-10%] size-[500px] bg-neon-violet/10 rounded-full blur-[150px] pointer-events-none animate-float-delayed"></div>
+        <div className="max-w-6xl mx-auto px-4 pt-32 pb-12 relative min-h-screen flex text-slate-300">
+            {/* Engaging Dynamic Background */}
+            <div className="fixed inset-0 bg-pitch-black z-[-3]"></div>
+            <div className="fixed inset-0 bg-grid opacity-[0.15] z-[-2] pointer-events-none"></div>
+            <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-electric-blue/20 rounded-full blur-[120px] pointer-events-none animate-float z-[-1]"></div>
+            <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] bg-neon-violet/20 rounded-full blur-[120px] pointer-events-none animate-float-delayed z-[-1]"></div>
+            <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-transparent via-pitch-black/50 to-pitch-black z-[-1] pointer-events-none"></div>
 
-            <div className="relative z-10">
-                <div className="mb-8 text-center">
-                    <h1 className="text-4xl font-bold font-display text-white flex items-center justify-center gap-3">
-                        <div className="bg-pitch-black/50 p-2 rounded-lg border border-white/10">
-                            <UploadIcon className="h-8 w-8 text-electric-blue" />
-                        </div>
-                        {isEditing ? 'Edit Node Data' : 'Upload Node Data'}
-                    </h1>
-                    <p className="mt-2 text-slate-400">
-                        {isEditing ? 'Modify existing knowledge entry' : 'Contribute knowledge to the neural network'}
-                    </p>
+            <div className="w-full relative z-10 flex flex-col">
+                <div className="mb-10 text-left border-b border-white/10 pb-6 flex items-end justify-between">
+                    <div>
+                        <h1 className="text-3xl font-display font-semibold text-white tracking-tight flex items-center gap-3">
+                            <UploadIcon className="h-7 w-7 text-slate-400" />
+                            {isEditing ? 'Edit Knowledge Node' : 'Upload Resource Data'}
+                        </h1>
+                        <p className="mt-2 text-sm text-slate-500 max-w-xl">
+                            {isEditing ? 'Update the metadata and source files for your existing contribution to the network.' : 'Contribute verified academic materials to the central database. Ensure all metadata is accurate for optimal indexing.'}
+                        </p>
+                    </div>
                 </div>
 
-                <div className="glass-card p-8 animate-fade-in-up neon-shadow-blue" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
+                <div className="w-full">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-8 flex items-center gap-3">
                             <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                             <p className="text-sm text-red-400 font-medium">{error}</p>
                         </div>
                     )}
 
                     {success && (
-                        <div className="bg-acid-green/10 border border-acid-green/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-                            <CheckCircle className="h-5 w-5 text-acid-green flex-shrink-0" />
-                            <p className="text-sm text-acid-green font-medium">Data upload complete. Syncing to network...</p>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-8 flex items-center gap-3">
+                            <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                            <p className="text-sm text-emerald-400 font-medium">Data transmission complete. Navigating...</p>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* File Upload Zone */}
-                        <div className="group relative">
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Source File</label>
-                            <div className="relative border-2 border-dashed border-white/10 rounded-xl p-8 hover:border-electric-blue/50 transition-colors bg-pitch-black/30 group-hover:bg-pitch-black/50 cursor-pointer text-center">
-                                <input
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                />
-                                <div className="space-y-4">
-                                    <div className="mx-auto w-16 h-16 rounded-full bg-electric-blue/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <FileText className="h-8 w-8 text-electric-blue" />
-                                    </div>
-                                    {file ? (
-                                        <div className="space-y-2">
-                                            <p className="text-white font-medium truncate max-w-xs mx-auto">{file.name}</p>
-                                            <div className="flex items-center justify-center gap-3">
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-acid-green/10 text-acid-green border border-acid-green/20">
-                                                    {getFileExtension(file)}
-                                                </span>
-                                                <span className="text-slate-400 text-xs font-medium">
-                                                    {formatFileSize(file.size)}
-                                                </span>
-                                            </div>
-                                            <p className="text-slate-500 text-xs">Click again to change file</p>
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <p className="text-white font-medium">Click to select or drag file here</p>
-                                            <p className="text-slate-500 text-sm mt-1">PDF, PNG, JPG, DOCX, PPTX (Max 10MB)</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                    <form onSubmit={handleSubmit} className="space-y-10">
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Left Column */}
-                            <div className="space-y-6">
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Title</label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                            <Tag className="h-5 w-5" />
-                                        </span>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                            {/* Left Column (5 columns wide) */}
+                            <div className="lg:col-span-5 flex flex-col gap-6">
+
+                                {/* Title */}
+                                <div className="group flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Title</label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-4 text-slate-500 pointer-events-none">
+                                            <Tag className="h-4 w-4" />
+                                        </div>
                                         <input
                                             type="text"
                                             name="title"
                                             required
                                             value={formData.title}
                                             onChange={handleChange}
-                                            className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
-                                            placeholder="e.g., Data Structures Notes"
+                                            className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all placeholder:text-slate-600"
+                                            placeholder="Prompt For CIA Python Mini Project"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Subject</label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                            <BookOpen className="h-5 w-5" />
-                                        </span>
+                                {/* Subject */}
+                                <div className="group flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Subject</label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-4 text-slate-500 pointer-events-none">
+                                            <BookOpen className="h-4 w-4" />
+                                        </div>
                                         <input
                                             type="text"
                                             name="subject"
                                             required
                                             value={formData.subject}
                                             onChange={handleChange}
-                                            className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                            className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all placeholder:text-slate-600"
                                             placeholder="e.g. Computer Science"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Resource Type</label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                            <Layers className="h-5 w-5" />
-                                        </span>
+                                {/* Resource Type */}
+                                <div className="group flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Resource Type</label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-4 text-slate-500 pointer-events-none">
+                                            <Layers className="h-4 w-4" />
+                                        </div>
                                         <select
                                             name="resource_type"
                                             value={formData.resource_type}
                                             onChange={handleChange}
-                                            className="appearance-none block w-full pl-10 pr-10 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                            className="w-full appearance-none bg-white/[0.02] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all cursor-pointer"
                                         >
-                                            <option value="notes">Notes</option>
-                                            <option value="qp">Question Paper</option>
-                                            <option value="solution">Solution</option>
-                                            <option value="report">Project Report</option>
-                                            <option value="material">Study Material</option>
+                                            <option value="notes" className="bg-pitch-black">Notes</option>
+                                            <option value="qp" className="bg-pitch-black">Question Paper</option>
+                                            <option value="solution" className="bg-pitch-black">Solution</option>
+                                            <option value="report" className="bg-pitch-black">Project Report</option>
+                                            <option value="material" className="bg-pitch-black">Study Material</option>
+                                            <option value="prompt" className="bg-pitch-black">Prompt</option>
                                         </select>
                                     </div>
                                 </div>
 
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Visibility</label>
+                                {/* Visibility Toggle */}
+                                <div className="group flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Visibility</label>
                                     <div className="flex gap-4">
-                                        <label className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${formData.privacy === 'public' ? 'border-electric-blue bg-electric-blue/10 text-white' : 'border-white/10 text-slate-500 hover:border-white/30'}`}>
+                                        <label className={`flex-1 cursor-pointer border rounded-xl p-2.5 flex items-center justify-center transition-all ${formData.privacy === 'public' ? 'border-blue-500/50 bg-blue-500/10 text-white' : 'border-white/10 text-slate-500 hover:border-white/20 bg-white/[0.01]'}`}>
                                             <input
                                                 type="radio"
                                                 name="privacy"
@@ -333,9 +309,9 @@ export default function Upload({ isEditing = false }) {
                                                 onChange={handleChange}
                                                 className="hidden"
                                             />
-                                            <span className="font-bold text-sm">Public</span>
+                                            <span className="font-semibold text-sm">Public</span>
                                         </label>
-                                        <label className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-center gap-2 transition-all ${formData.privacy === 'private' ? 'border-neon-violet bg-neon-violet/10 text-white' : 'border-white/10 text-slate-500 hover:border-white/30'}`}>
+                                        <label className={`flex-1 cursor-pointer border rounded-xl p-2.5 flex items-center justify-center transition-all ${formData.privacy === 'private' ? 'border-slate-400/50 bg-slate-500/10 text-white' : 'border-white/10 text-slate-500 hover:border-white/20 bg-white/[0.01]'}`}>
                                             <input
                                                 type="radio"
                                                 name="privacy"
@@ -344,106 +320,132 @@ export default function Upload({ isEditing = false }) {
                                                 onChange={handleChange}
                                                 className="hidden"
                                             />
-                                            <span className="font-bold text-sm">Private</span>
+                                            <span className="font-semibold text-sm">Private</span>
                                         </label>
                                     </div>
                                 </div>
 
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tags</label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                            <Tag className="h-5 w-5" />
-                                        </span>
+                                {/* Tags */}
+                                <div className="group flex flex-col gap-2">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Tags</label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-4 text-slate-500 pointer-events-none">
+                                            <Tag className="h-4 w-4" />
+                                        </div>
                                         <input
                                             type="text"
                                             name="tags"
                                             value={formData.tags}
                                             onChange={handleChange}
-                                            className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                            className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all placeholder:text-slate-600"
                                             placeholder="e.g. loops, arrays, logic (comma separated)"
                                         />
                                     </div>
                                 </div>
+
                             </div>
 
-                            {/* Right Column */}
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="group">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Branch</label>
-                                        <div className="relative">
-                                            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                                <Zap className="h-5 w-5" />
-                                            </span>
-                                            <input
-                                                type="text"
-                                                name="branch"
-                                                required
-                                                value={formData.branch}
-                                                onChange={handleChange}
-                                                className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="group">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Semester</label>
+                            {/* Right Column (7 columns wide) */}
+                            <div className="lg:col-span-7 flex flex-col gap-6">
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    {/* Semester */}
+                                    <div className="group flex flex-col gap-2">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Semester</label>
                                         <input
                                             type="number"
                                             name="semester"
                                             required
+                                            min="1"
+                                            max="10"
                                             value={formData.semester}
                                             onChange={handleChange}
-                                            className="appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
+                                            className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-3 px-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all"
                                         />
+                                    </div>
+
+                                    {/* Academic Year */}
+                                    <div className="group flex flex-col gap-2">
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Academic Year</label>
+                                        <div className="relative flex items-center">
+                                            <div className="absolute left-4 text-slate-500 pointer-events-none">
+                                                <Calendar className="h-4 w-4" />
+                                            </div>
+                                            <input
+                                                type="number"
+                                                name="year"
+                                                required
+                                                min="2000"
+                                                value={formData.year}
+                                                onChange={handleChange}
+                                                className="w-full bg-white/[0.02] border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Academic Year</label>
-                                    <div className="relative">
-                                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                                            <Calendar className="h-5 w-5" />
-                                        </span>
-                                        <input
-                                            type="number"
-                                            name="year"
-                                            required
-                                            value={formData.year}
-                                            onChange={handleChange}
-                                            className="appearance-none block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="group">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Description</label>
+                                {/* Description */}
+                                <div className="group flex flex-col gap-2 flex-grow">
+                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Description</label>
                                     <textarea
                                         name="description"
-                                        rows={4}
                                         value={formData.description}
                                         onChange={handleChange}
-                                        className="appearance-none block w-full px-4 py-3 border border-white/10 rounded-xl bg-pitch-black/50 text-white placeholder-slate-600 focus:outline-none focus:border-electric-blue/50 focus:bg-pitch-black/80 transition-all sm:text-sm font-medium"
-                                        placeholder="Brief description..."
+                                        className="w-full h-full min-h-[160px] bg-white/[0.02] border border-white/10 rounded-xl py-4 px-4 text-white text-sm focus:outline-none focus:border-white/30 focus:bg-white/[0.04] transition-all placeholder:text-slate-600 resize-none"
+                                        placeholder="Brief description of the material..."
                                     />
                                 </div>
+
                             </div>
                         </div>
 
-                        <div className="pt-4">
+                        {/* File Upload Zone spanning full width at bottom */}
+                        <div className="mt-6 pt-8 border-t border-white/5">
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Attachment Source</label>
+                            <label className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/10 rounded-2xl bg-white/[0.01] hover:bg-white/[0.03] hover:border-white/20 transition-all cursor-pointer overflow-hidden group">
+                                <input
+                                    type="file"
+                                    onChange={handleFileChange}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                {file ? (
+                                    <div className="flex flex-col items-center z-0 text-center px-4">
+                                        <div className="p-3 bg-white/5 rounded-full mb-3 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                                            <FileText className="h-8 w-8 text-blue-400" />
+                                        </div>
+                                        <p className="text-sm font-medium text-white truncate max-w-xs">{file.name}</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-white/10 text-slate-300">
+                                                {getFileExtension(file)}
+                                            </span>
+                                            <span className="text-xs text-slate-500 font-medium">{formatFileSize(file.size)}</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center z-0">
+                                        <div className="p-4 bg-white/[0.02] rounded-full mb-4 group-hover:bg-white/[0.05] transition-colors">
+                                            <HardDrive className="h-8 w-8 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                                        </div>
+                                        <p className="text-sm font-medium text-slate-300">Click to fetch local file, or drag and drop</p>
+                                        <p className="text-xs text-slate-500 mt-1">Supports PDF, DOCX, ZIP, PNG, JPG (Max 10MB)</p>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+
+                        {/* Submit Action */}
+                        <div className="pt-6 flex justify-end">
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="group relative w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent text-sm font-bold uppercase tracking-wider rounded-xl text-white bg-electric-blue hover:bg-electric-blue/90 focus:outline-none disabled:opacity-50 neon-shadow-blue transition-all hover:scale-[1.02] active:scale-95"
+                                className="group relative flex items-center justify-center gap-2 py-3.5 px-8 rounded-xl text-sm font-bold tracking-wide text-white bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50 transition-all"
                             >
                                 {loading ? (
-                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                    <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
                                 ) : (
-                                    <>
-                                        <HardDrive className="h-5 w-5" />
-                                        {isEditing ? 'Update Node' : 'Initiate Upload'}
-                                    </>
+                                    <UploadIcon className="h-4 w-4 text-slate-300 group-hover:animate-bounce-subtle" />
                                 )}
+                                {isEditing ? 'Save Changes' : 'Upload Resource'}
                             </button>
                         </div>
                     </form>
